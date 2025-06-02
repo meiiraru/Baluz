@@ -9,6 +9,8 @@ import cinnamon.utils.Maths;
 import cinnamon.utils.Resource;
 import cinnamon.vr.XrHandTransform;
 import cinnamon.vr.XrRenderer;
+import cinnamon.world.collisions.CollisionResolver;
+import cinnamon.world.collisions.CollisionResult;
 import cinnamon.world.entity.Entity;
 import cinnamon.world.entity.xr.XrGrabbable;
 import cinnamon.world.entity.xr.XrHand;
@@ -20,11 +22,11 @@ import java.util.UUID;
 public class Dart extends XrGrabbable {
 
     private static final Resource MODEL = new Resource("baluz", "models/dart/dart.obj");
-    private static final int LIFETIME = 50; // in ticks
+    private static final int LIFETIME = 600; // in ticks
     private static final float SPEED = 0.15f;
 
     private int life = LIFETIME;
-    private boolean flying;
+    private boolean flying, grounded;
 
     public Dart(UUID uuid) {
         super(uuid, MODEL);
@@ -41,17 +43,19 @@ public class Dart extends XrGrabbable {
                 return;
             }
 
-            Vector3f vec = new Vector3f(motion);
-            if (vec.lengthSquared() > 0f)
-                vec.normalize();
+            if (!grounded) {
+                Vector3f vec = new Vector3f(motion);
+                if (vec.lengthSquared() > 0f)
+                    vec.normalize();
 
-            this.rotateTo(Maths.dirToRot(vec));
+                this.rotateTo(Maths.dirToRot(vec));
+            }
         }
     }
 
     @Override
     protected void applyForces() {
-        if (flying)
+        if (flying && !grounded)
             this.motion.y -= world.gravity * 0.5f;
     }
 
@@ -71,6 +75,12 @@ public class Dart extends XrGrabbable {
     }
 
     @Override
+    protected void resolveCollision(CollisionResult collision, Vector3f motion, Vector3f move) {
+        CollisionResolver.stick(collision, motion, move);
+        grounded = true;
+    }
+
+    @Override
     public EntityRegistry getType() {
         return EntityRegistry.UNKNOWN;
     }
@@ -78,6 +88,7 @@ public class Dart extends XrGrabbable {
     @Override
     public void grab(XrHand hand) {
         flying = false;
+        grounded = false;
         life = LIFETIME;
         super.grab(hand);
     }

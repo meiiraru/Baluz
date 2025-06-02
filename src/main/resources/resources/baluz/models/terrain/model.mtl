@@ -1,0 +1,6 @@
+# Made in Blockbench 4.12.4
+newmtl m_3fb697b6-897e-6406-3d40-79a3c62aa46b
+map_Kd -smooth_mip floor.png
+newmtl m_63aebc06-6f6a-8b69-d27b-b84aae64c1b0
+map_Kd -smooth_mip wall.png
+newmtl none
