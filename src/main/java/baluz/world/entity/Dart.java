@@ -68,7 +68,7 @@ public class Dart extends XrGrabbable {
     protected void collide(Entity entity) {
         super.collide(entity);
 
-        if (!isRemoved() && flying && entity instanceof Balloon balloon) {
+        if (!isRemoved() && entity instanceof Balloon balloon) {
             balloon.pop();
             //remove();
         }

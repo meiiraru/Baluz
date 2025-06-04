@@ -3,7 +3,6 @@ package baluz.world;
 import baluz.world.entity.Balloon;
 import baluz.world.entity.Dart;
 import cinnamon.gui.Toast;
-import cinnamon.registry.TerrainRegistry;
 import cinnamon.render.Camera;
 import cinnamon.render.MatrixStack;
 import cinnamon.utils.AABB;
@@ -26,7 +25,7 @@ import static org.lwjgl.glfw.GLFW.GLFW_PRESS;
 
 public class BaluzWorld extends WorldClient {
 
-    private static final Resource FLOOR = new Resource("baluz", "models/terrain/model.obj");
+    private static final Resource LEVEL = new Resource("baluz", "levels/test.json");
 
     private final List<Terrain> terrain = new ArrayList<>();
 
@@ -52,15 +51,11 @@ public class BaluzWorld extends WorldClient {
             }
         }
 
-        Spawner<Balloon> balloon = new Spawner<>(UUID.randomUUID(), 10, () -> new Balloon(UUID.randomUUID()));
-        balloon.setPos(0f, 0f, -2f);
-        this.addEntity(balloon);
-
         Spawner<Dart> dart = new Spawner<>(UUID.randomUUID(), 5, () -> new Dart(UUID.randomUUID()), e -> e.isRemoved() || e.isFlying());
         dart.setPos(0.75f, 0.5f, 0f);
         this.addEntity(dart);
 
-        setTerrain(new Terrain(FLOOR, TerrainRegistry.BARRIER), 0, 0, 0);
+        WorldLoader.loadWorld(LEVEL, this);
     }
 
     @Override
@@ -134,7 +129,7 @@ public class BaluzWorld extends WorldClient {
     }
 
     @Override
-    public void setTerrain(Terrain terrain, int x, int y, int z) {
+    public void setTerrain(Terrain terrain, float x, float y, float z) {
         if (terrain == null)
             return;
 

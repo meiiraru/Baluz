@@ -1,9 +1,12 @@
 package baluz.world.entity;
 
 import baluz.world.BaluzWorld;
-import cinnamon.Client;
+import cinnamon.model.ModelManager;
+import cinnamon.model.material.Material;
 import cinnamon.registry.EntityRegistry;
 import cinnamon.render.MatrixStack;
+import cinnamon.render.model.ModelRenderer;
+import cinnamon.render.shader.Shader;
 import cinnamon.utils.Colors;
 import cinnamon.utils.Maths;
 import cinnamon.utils.Resource;
@@ -14,22 +17,42 @@ import java.util.UUID;
 
 public class Balloon extends PhysEntity {
 
-    private static final Resource MODEL = new Resource("baluz", "models/balloon/balloon.obj");
+    private static final Resource
+            MODEL_TOP = new Resource("baluz", "models/balloon/balloon.obj"),
+            MODEL_STRING = new Resource("baluz", "models/balloon/string.obj");
 
-    public Balloon(UUID uuid) {
-        super(uuid, MODEL);
+    private final ModelRenderer stringModel;
+    private final Material material;
+    private final int color;
+
+    private int time;
+
+    public Balloon(UUID uuid, int color, Material material) {
+        super(uuid, MODEL_TOP);
+        this.stringModel = ModelManager.load(MODEL_STRING);
+        this.color = color;
+        this.material = material;
+        this.time = (int) (Math.random() * 1000);
     }
 
     @Override
     public void tick() {
         super.tick();
-        this.rotate(0, 1);
+        this.rotateTo(0, ++time);
     }
 
     @Override
     protected void applyModelPose(MatrixStack matrices, float delta) {
-        matrices.translate(0, (float) Math.sin((Client.getInstance().ticks + delta) * 0.05f) * 0.15f, 0);
+        matrices.translate(0, (float) Math.sin((time + delta) * 0.05f) * 0.15f, 0);
         super.applyModelPose(matrices, delta);
+    }
+
+    @Override
+    protected void renderModel(MatrixStack matrices, float delta) {
+        Shader.activeShader.applyColor(color);
+        model.render(matrices, material);
+        Shader.activeShader.applyColor(0xFFFFFF);
+        stringModel.render(matrices);
     }
 
     public void pop() {
@@ -52,14 +75,6 @@ public class Balloon extends PhysEntity {
     @Override
     protected void applyForces() {
         //super.applyForces();
-    }
-
-    @Override
-    protected void updateAABB() {
-        super.updateAABB();
-        float h = aabb.getHeight();
-        aabb.scale(1f, 0.5f, 1f);
-        aabb.translate(0, h * 0.25f, 0);
     }
 
     @Override

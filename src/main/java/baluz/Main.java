@@ -3,9 +3,12 @@ package baluz;
 import baluz.screens.MainMenu;
 import cinnamon.Cinnamon;
 import cinnamon.Client;
+import cinnamon.logger.Logger;
 import cinnamon.utils.Resource;
 
 public class Main {
+
+    public static final Logger LOGGER = new Logger("baluz");
 
     public static void main(String[] args) {
         Cinnamon.TITLE = "Baluz";
