@@ -5,6 +5,7 @@ import cinnamon.model.GeometryHelper;
 import cinnamon.registry.EntityRegistry;
 import cinnamon.render.MatrixStack;
 import cinnamon.render.batch.VertexConsumer;
+import cinnamon.utils.AABB;
 import cinnamon.utils.Maths;
 import cinnamon.utils.Resource;
 import cinnamon.vr.XrHandTransform;
@@ -14,6 +15,7 @@ import cinnamon.world.collisions.CollisionResult;
 import cinnamon.world.entity.Entity;
 import cinnamon.world.entity.xr.XrGrabbable;
 import cinnamon.world.entity.xr.XrHand;
+import cinnamon.world.particle.StarParticle;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
@@ -44,6 +46,12 @@ public class Dart extends XrGrabbable {
             }
 
             if (!grounded) {
+                StarParticle particle = new StarParticle(60, 0xFFFFFFFF);
+                particle.setPos(getPos());
+                particle.setScale(0.5f);
+                particle.setMotion(0, 0, 0);
+                getWorld().addParticle(particle);
+
                 Vector3f vec = new Vector3f(motion);
                 if (vec.lengthSquared() > 0f)
                     vec.normalize();
@@ -78,6 +86,7 @@ public class Dart extends XrGrabbable {
     protected void resolveCollision(CollisionResult collision, Vector3f motion, Vector3f move) {
         CollisionResolver.stick(collision, motion, move);
         grounded = true;
+        updateAABB();
     }
 
     @Override
@@ -98,6 +107,7 @@ public class Dart extends XrGrabbable {
         flying = true;
         this.setMotion(getMoveDir());
         super.release();
+        updateAABB();
     }
 
     @Override
@@ -111,16 +121,29 @@ public class Dart extends XrGrabbable {
         Vector3f vec = new Vector3f();
         if (getHand() != null) {
             XrHandTransform transform = XrRenderer.getHandTransform(getHand().getHand());
-            vec.add(transform.vel());
+            vec.add(transform.vel()).mul(SPEED);
             Vector2f rot = ((BaluzWorld) getWorld()).player.getRot();
             vec.rotateY((float) Math.toRadians(-rot.y));
             vec.rotateX((float) Math.toRadians(rot.x));
-            vec.mul(SPEED);
         }
         return vec;
     }
 
     public boolean isFlying() {
         return flying;
+    }
+
+    @Override
+    protected void updateAABB() {
+        if (!flying || grounded) {
+            super.updateAABB();
+            return;
+        }
+
+        Vector3f pos = this.getPos();
+        this.aabb = new AABB(pos, pos);
+        aabb.inflate(0.01f);
+        Vector3f dir = getLookDir();
+        aabb.translate(dir.mul(0.11f));
     }
 }

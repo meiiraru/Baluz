@@ -41,6 +41,7 @@ public class BaluzWorld extends WorldClient {
     @Override
     protected void tempLoad() {
         Toast.clear(Toast.ToastType.WORLD);
+        skyBox.renderSun = false;
 
         player.updateMovementFlags(false, false, true);
 
@@ -54,6 +55,10 @@ public class BaluzWorld extends WorldClient {
         Spawner<Dart> dart = new Spawner<>(UUID.randomUUID(), 5, () -> new Dart(UUID.randomUUID()), e -> e.isRemoved() || e.isFlying());
         dart.setPos(0.75f, 0.5f, 0f);
         this.addEntity(dart);
+
+        Spawner<Dart> dart2 = new Spawner<>(UUID.randomUUID(), 5, () -> new Dart(UUID.randomUUID()), e -> e.isRemoved() || e.isFlying());
+        dart2.setPos(0.25f, 0.5f, 0f);
+        this.addEntity(dart2);
 
         WorldLoader.loadWorld(LEVEL, this);
     }
@@ -116,7 +121,7 @@ public class BaluzWorld extends WorldClient {
 
     @Override
     public void xrTriggerPress(int button, float value, int hand, float lastValue) {
-        if (hand < 2 && button == 1) {
+        if (hand < 2 && hands[hand] != null) {
             if (value > 0.5f && lastValue <= 0.5f) {
                 hands[hand].grab();
             } else if (value <= 0.5f && lastValue > 0.5f) {

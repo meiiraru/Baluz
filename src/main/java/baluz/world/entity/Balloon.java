@@ -39,11 +39,13 @@ public class Balloon extends PhysEntity {
     public void tick() {
         super.tick();
         this.rotateTo(0, ++time);
+        float oSin = (float) Math.sin((time - 1) * 0.05f) * 0.15f;
+        float sin = (float) Math.sin(time * 0.05f) * 0.15f;
+        this.moveTo(pos.x, pos.y - oSin + sin, pos.z);
     }
 
     @Override
     protected void applyModelPose(MatrixStack matrices, float delta) {
-        matrices.translate(0, (float) Math.sin((time + delta) * 0.05f) * 0.15f, 0);
         super.applyModelPose(matrices, delta);
     }
 
