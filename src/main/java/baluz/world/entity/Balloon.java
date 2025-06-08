@@ -64,7 +64,11 @@ public class Balloon extends PhysEntity {
             return;
 
         ((BaluzWorld) getWorld()).addScore(score);
+        popParticles();
+        remove();
+    }
 
+    protected void popParticles() {
         for (int i = 0; i < 20; i++) {
             DustParticle particle = new DustParticle((int) (Math.random() * 10) + 5, Colors.randomRainbow().rgba);
             particle.setPos(aabb.getCenter());
@@ -72,8 +76,6 @@ public class Balloon extends PhysEntity {
             particle.setScale(1.5f);
             world.addParticle(particle);
         }
-
-        remove();
     }
 
     @Override

@@ -29,6 +29,17 @@ public class WorldLoader {
         try {
             JsonObject json = JsonParser.parseReader(new InputStreamReader(IOUtils.getResource(level))).getAsJsonObject();
 
+            //time
+            world.initialTime = (int) (json.get("starting_time").getAsFloat() * Client.TPS);
+            world.timeBonusMul = json.get("time_bonus_mul").getAsFloat();
+
+            //text
+            JsonObject text = json.getAsJsonObject("text");
+            world.textTransform.setPos(parseVec3(text.getAsJsonArray("pos")));
+            world.textTransform.setPivot(world.textTransform.getPos());
+            world.textTransform.setRot(parseVec3(text.getAsJsonArray("rot")));
+            world.textTransform.setScale(text.get("scale").getAsFloat());
+
             //terrain
             JsonArray terrain = json.getAsJsonArray("terrain");
             for (JsonElement jsonElement : terrain) {
@@ -37,7 +48,11 @@ public class WorldLoader {
                 Resource model = new Resource(terrainObj.get("path").getAsString());
                 Vector3f pos = parseVec3(terrainObj.getAsJsonArray("pos"));
 
-                world.setTerrain(new Terrain(model, TerrainRegistry.BARRIER), pos.x, pos.y, pos.z);
+                Terrain t = new Terrain(model, TerrainRegistry.BARRIER);
+                float rot = terrainObj.has("rot") ? terrainObj.get("rot").getAsFloat() : 0;
+                t.setRotation((byte) (rot / 90 % 4));
+
+                world.setTerrain(t, pos.x, pos.y, pos.z);
             }
 
             //waves
