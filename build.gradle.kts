@@ -7,7 +7,7 @@ version = "1.0.0"
 val mainClass = "baluz.Main"
 
 //dependencies
-val cinnamonVersion = "0.3.2"
+val cinnamonVersion = "0.3.3"
 
 val lwjglModules = arrayOf(
     "lwjgl",
