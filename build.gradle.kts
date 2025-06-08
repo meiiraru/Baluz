@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "com.github.meiiraru"
-version = "1.0.0"
+version = "0.1.0"
 val mainClass = "baluz.Main"
 
 //dependencies
