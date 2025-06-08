@@ -24,14 +24,16 @@ public class Balloon extends PhysEntity {
     private final ModelRenderer stringModel;
     private final Material material;
     private final int color;
+    private final int score;
 
     private int time;
 
-    public Balloon(UUID uuid, int color, Material material) {
+    public Balloon(UUID uuid, int color, Material material, int score) {
         super(uuid, MODEL_TOP);
         this.stringModel = ModelManager.load(MODEL_STRING);
         this.color = color;
         this.material = material;
+        this.score = score;
         this.time = (int) (Math.random() * 1000);
     }
 
@@ -61,7 +63,7 @@ public class Balloon extends PhysEntity {
         if (isRemoved())
             return;
 
-        ((BaluzWorld) getWorld()).addScore(1);
+        ((BaluzWorld) getWorld()).addScore(score);
 
         for (int i = 0; i < 20; i++) {
             DustParticle particle = new DustParticle((int) (Math.random() * 10) + 5, Colors.randomRainbow().rgba);

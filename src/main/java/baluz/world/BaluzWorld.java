@@ -5,10 +5,10 @@ import baluz.world.entity.Dart;
 import cinnamon.gui.Toast;
 import cinnamon.render.Camera;
 import cinnamon.render.MatrixStack;
+import cinnamon.text.Text;
 import cinnamon.utils.AABB;
 import cinnamon.utils.Resource;
 import cinnamon.vr.XrManager;
-import cinnamon.vr.XrRenderer;
 import cinnamon.world.entity.Entity;
 import cinnamon.world.entity.Spawner;
 import cinnamon.world.entity.living.Player;
@@ -28,8 +28,11 @@ public class BaluzWorld extends WorldClient {
     private static final Resource LEVEL = new Resource("baluz", "levels/test.json");
 
     private final List<Terrain> terrain = new ArrayList<>();
+    private final List<Wave> waves = new ArrayList<>();
 
     private int score = 0;
+    private int currentWave = 0;
+
     private final XrHand[] hands = new XrHand[2];
 
     public BaluzWorld() {
@@ -60,14 +63,36 @@ public class BaluzWorld extends WorldClient {
         dart2.setPos(0.25f, 0.5f, 0f);
         this.addEntity(dart2);
 
-        WorldLoader.loadWorld(LEVEL, this);
+        waves.addAll(WorldLoader.loadWorld(LEVEL, this));
+        loadWave(currentWave);
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+
+        if (currentWave >= waves.size())
+            return;
+
+        Wave curr = waves.get(currentWave);
+        if (curr.isComplete()) {
+            int s = curr.getScoreReward();
+            score += s;
+            if (s > 0)
+                Toast.addToast(Text.of("Wave complete! +" + s + "pts!")).type(Toast.ToastType.WORLD);
+            else
+                Toast.addToast(Text.of("Wave complete!")).type(Toast.ToastType.WORLD);
+            currentWave++;
+            if (currentWave < waves.size()) {
+                loadWave(currentWave);
+            } else {
+                Toast.addToast(Text.of("All waves completed! Final score: " + score)).type(Toast.ToastType.WORLD);
+            }
+        }
     }
 
     @Override
     protected void renderWorld(Camera camera, MatrixStack matrices, float delta) {
-        if (client.screen == null)
-            renderHands(camera, matrices);
-
         int renderedTerrain = 0;
         for (Terrain t : terrain) {
             if (t.shouldRender(camera)) {
@@ -83,14 +108,6 @@ public class BaluzWorld extends WorldClient {
     @Override
     protected void renderTargetedBlock(Entity cameraEntity, MatrixStack matrices, float delta) {
         //super.renderTargetedBlock(cameraEntity, matrices, delta);
-    }
-
-    private void renderHands(Camera camera, MatrixStack matrices) {
-        matrices.pushMatrix();
-        matrices.translate(camera.getPos());
-        matrices.rotate(camera.getRot());
-        XrRenderer.renderHands(matrices);
-        matrices.popMatrix();
     }
 
     @Override
@@ -150,5 +167,10 @@ public class BaluzWorld extends WorldClient {
             if (t.getAABB().intersects(region))
                 list.add(t);
         return list;
+    }
+
+    private void loadWave(int i) {
+        for (Balloon ballon : waves.get(i).getBallons())
+            addEntity(ballon);
     }
 }

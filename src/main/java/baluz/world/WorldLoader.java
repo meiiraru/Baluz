@@ -9,9 +9,7 @@ import cinnamon.registry.TerrainRegistry;
 import cinnamon.utils.Colors;
 import cinnamon.utils.IOUtils;
 import cinnamon.utils.Resource;
-import cinnamon.world.entity.Spawner;
 import cinnamon.world.terrain.Terrain;
-import cinnamon.world.world.World;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -19,11 +17,15 @@ import com.google.gson.JsonParser;
 import org.joml.Vector3f;
 
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 public class WorldLoader {
 
-    public static void loadWorld(Resource level, World world) {
+    public static List<Wave> loadWorld(Resource level, BaluzWorld world) {
+        List<Wave> waveList = new ArrayList<>();
+
         try {
             JsonObject json = JsonParser.parseReader(new InputStreamReader(IOUtils.getResource(level))).getAsJsonObject();
 
@@ -38,27 +40,56 @@ public class WorldLoader {
                 world.setTerrain(new Terrain(model, TerrainRegistry.BARRIER), pos.x, pos.y, pos.z);
             }
 
-            //balloons
-            JsonArray balloons = json.getAsJsonArray("balloons");
-            for (JsonElement balloon : balloons) {
-                JsonObject balloonObj = balloon.getAsJsonObject();
+            //waves
+            JsonArray waves = json.getAsJsonArray("waves");
+            for (JsonElement wave : waves) {
+                JsonObject waveObj = wave.getAsJsonObject();
+                Wave waveInstance = parseWave(waveObj);
+                waveList.add(waveInstance);
 
-                int delay = (int) (balloonObj.get("delay").getAsFloat() * Client.TPS);
-                int color = balloonObj.has("color") ? Integer.parseInt(balloonObj.get("color").getAsString(), 16) : Colors.randomRainbow().rgb;
-                Vector3f pos = parseVec3(balloonObj.getAsJsonArray("pos"));
-                Material material = balloonObj.has("material") ? MaterialRegistry.valueOf(balloonObj.get("material").getAsString()).material : null;
-
-                Spawner<Balloon> balloonSpawner = new Spawner<>(UUID.randomUUID(), delay, () -> new Balloon(UUID.randomUUID(), color, material));
-                balloonSpawner.setRenderCooldown(false);
-                balloonSpawner.setPos(pos.x, pos.y, pos.z);
-                world.addEntity(balloonSpawner);
+                JsonArray balloons = waveObj.getAsJsonArray("balloons");
+                for (JsonElement balloon : balloons) {
+                    Balloon ballonInstance = parseBalloon(balloon);
+                    waveInstance.getBallons().add(ballonInstance);
+                }
             }
         } catch (Exception e) {
             Main.LOGGER.error("Failed to load world: %s", level, e);
         }
+
+        return waveList;
     }
 
     private static Vector3f parseVec3(JsonArray arr) {
         return new Vector3f(arr.get(0).getAsFloat(), arr.get(1).getAsFloat(), arr.get(2).getAsFloat());
+    }
+
+    private static Wave parseWave(JsonObject waveObj) {
+        //awards
+        int time = 0;
+        int score = 0;
+
+        if (waveObj.has("awards")) {
+            JsonObject awards = waveObj.getAsJsonObject("awards");
+            if (awards.has("time"))
+                time = (int) (awards.get("time").getAsFloat() * Client.TPS);
+            if (awards.has("score"))
+                score = awards.get("score").getAsInt();
+        }
+
+        return new Wave(time, score);
+    }
+
+    private static Balloon parseBalloon(JsonElement balloon) {
+        JsonObject balloonObj = balloon.getAsJsonObject();
+
+        Material material = balloonObj.has("material") ? MaterialRegistry.valueOf(balloonObj.get("material").getAsString()).material : null;
+        int color = balloonObj.has("color") ? Integer.parseInt(balloonObj.get("color").getAsString(), 16) : material == null ? Colors.randomRainbow().rgb : Colors.WHITE.rgb;
+        Vector3f pos = parseVec3(balloonObj.getAsJsonArray("pos"));
+        int score = balloonObj.has("score") ? balloonObj.get("score").getAsInt() : 1;
+
+        Balloon balloonInstance = new Balloon(UUID.randomUUID(), color, material, score);
+        balloonInstance.setPos(pos);
+        return balloonInstance;
     }
 }
