@@ -1,6 +1,5 @@
 package baluz.screens;
 
-import baluz.world.BaluzWorld;
 import cinnamon.gui.Screen;
 import cinnamon.gui.widgets.WidgetList;
 import cinnamon.gui.widgets.types.Button;
@@ -14,18 +13,13 @@ import cinnamon.utils.Resource;
 public class MainMenu extends Screen {
 
     private static final Resource LOGO = new Resource("baluz", "textures/logo.png");
-    private static final Resource LEVEL = new Resource("baluz", "levels/test.json");
 
     @Override
     public void init() {
         WidgetList list = new WidgetList(width / 2, height / 2, width, height, 12);
         list.setAlignment(Alignment.CENTER);
 
-        list.addWidget(new Button(0, 0, 100, 20, Text.of("Play"), (button) -> {
-            BaluzWorld world = new BaluzWorld(LEVEL);
-            world.init();
-        }));
-
+        list.addWidget(new Button(0, 0, 100, 20, Text.of("Play"), (button) -> client.setScreen(new WorldPicker(this))));
         list.addWidget(new Button(0, 0, 100, 20, Text.of("Exit"), (button) -> client.window.exit()));
 
         addWidget(list);
