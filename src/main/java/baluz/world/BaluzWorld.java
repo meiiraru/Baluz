@@ -12,7 +12,6 @@ import cinnamon.render.MatrixStack;
 import cinnamon.render.batch.VertexConsumer;
 import cinnamon.text.Style;
 import cinnamon.text.Text;
-import cinnamon.utils.AABB;
 import cinnamon.utils.Alignment;
 import cinnamon.utils.Colors;
 import cinnamon.utils.Resource;
@@ -22,7 +21,6 @@ import cinnamon.world.entity.Entity;
 import cinnamon.world.entity.Spawner;
 import cinnamon.world.entity.living.Player;
 import cinnamon.world.entity.xr.XrHand;
-import cinnamon.world.terrain.Terrain;
 import cinnamon.world.world.WorldClient;
 
 import java.util.ArrayList;
@@ -39,7 +37,6 @@ public class BaluzWorld extends WorldClient {
             new Resource("baluz", "textures/icons/balloon.png"),
     };
 
-    private final List<Terrain> terrain = new ArrayList<>();
     private final List<Wave> waves = new ArrayList<>();
     public final Transform textTransform = new Transform();
 
@@ -66,9 +63,8 @@ public class BaluzWorld extends WorldClient {
 
     @Override
     protected void tempLoad() {
-        skyBox.renderSun = false;
-
         player.updateMovementFlags(false, false, true);
+        player.getAbilities().canBuild(false);
 
         if (XrManager.isInXR()) {
             for (int i = 0; i < hands.length; i++) {
@@ -93,7 +89,7 @@ public class BaluzWorld extends WorldClient {
 
         popAllBalloons();
 
-        terrain.clear();
+        terrainManager.clear();
 
         waves.clear();
         waves.addAll(WorldLoader.loadWorld(level, this));
@@ -189,18 +185,8 @@ public class BaluzWorld extends WorldClient {
 
     @Override
     protected void renderWorld(Camera camera, MatrixStack matrices, float delta) {
-        int renderedTerrain = 0;
-        for (Terrain t : terrain) {
-            if (t.shouldRender(camera)) {
-                t.render(matrices, delta);
-                renderedTerrain++;
-            }
-        }
-
-        renderScore(matrices, delta);
-
         super.renderWorld(camera, matrices, delta);
-        this.renderedTerrain = renderedTerrain;
+        renderScore(matrices, delta);
     }
 
     private void renderScore(MatrixStack matrices, float delta) {
@@ -302,7 +288,7 @@ public class BaluzWorld extends WorldClient {
 
     @Override
     public void xrTriggerPress(int button, float value, int hand, float lastValue) {
-        if (hand < 2 && hands[hand] != null) {
+        if (hand < hands.length && hands[hand] != null) {
             if (value > 0.5f && lastValue <= 0.5f) {
                 hands[hand].grab();
             } else if (value <= 0.5f && lastValue > 0.5f) {
@@ -312,25 +298,6 @@ public class BaluzWorld extends WorldClient {
         }
 
         super.xrTriggerPress(button, value, hand, lastValue);
-    }
-
-    @Override
-    public void setTerrain(Terrain terrain, float x, float y, float z) {
-        if (terrain == null)
-            return;
-
-        terrain.setPos(x, y, z);
-        this.terrain.add(terrain);
-        scheduledTicks.add(() -> terrain.onAdded(this));
-    }
-
-    @Override
-    public List<Terrain> getTerrain(AABB region) {
-        List<Terrain> list = new ArrayList<>();
-        for (Terrain t : terrain)
-            if (t.getAABB().intersects(region))
-                list.add(t);
-        return list;
     }
 
     private void loadWave(int i) {

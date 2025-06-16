@@ -40,6 +40,10 @@ public class WorldLoader {
             world.textTransform.setRot(parseVec3(text.getAsJsonArray("rot")));
             world.textTransform.setScale(text.get("scale").getAsFloat());
 
+            //skybox
+            if (json.has("skybox"))
+                world.getSky().setSkyBox(new Resource(json.get("skybox").getAsString()));
+
             //terrain
             JsonArray terrain = json.getAsJsonArray("terrain");
             for (JsonElement jsonElement : terrain) {
