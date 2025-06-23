@@ -10,18 +10,24 @@ import cinnamon.model.Transform;
 import cinnamon.render.Camera;
 import cinnamon.render.MatrixStack;
 import cinnamon.render.batch.VertexConsumer;
+import cinnamon.sound.SoundCategory;
 import cinnamon.text.Style;
 import cinnamon.text.Text;
 import cinnamon.utils.Alignment;
 import cinnamon.utils.Colors;
+import cinnamon.utils.Maths;
 import cinnamon.utils.Resource;
 import cinnamon.utils.TextUtils;
 import cinnamon.vr.XrManager;
 import cinnamon.world.entity.Entity;
 import cinnamon.world.entity.Spawner;
 import cinnamon.world.entity.living.Player;
+import cinnamon.world.entity.misc.Firework;
+import cinnamon.world.entity.misc.FireworkStar;
+import cinnamon.world.entity.xr.XrGrabbable;
 import cinnamon.world.entity.xr.XrHand;
 import cinnamon.world.world.WorldClient;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +41,12 @@ public class BaluzWorld extends WorldClient {
             new Resource("baluz", "textures/icons/time.png"),
             new Resource("baluz", "textures/icons/score.png"),
             new Resource("baluz", "textures/icons/balloon.png"),
+    };
+
+    private static final Resource ALARM = new Resource("baluz", "sounds/alarm.ogg");
+    private static final Resource[] TICK = {
+            new Resource("baluz", "sounds/tick1.ogg"),
+            new Resource("baluz", "sounds/tick2.ogg")
     };
 
     private final List<Wave> waves = new ArrayList<>();
@@ -53,6 +65,9 @@ public class BaluzWorld extends WorldClient {
     public float timeBonusMul = 1f;
 
     private int prepare = 0;
+    private GameState state = GameState.PREPARE;
+
+    private int lastTick = 0;
 
     public BaluzWorld(Resource level) {
         super();
@@ -64,22 +79,22 @@ public class BaluzWorld extends WorldClient {
     @Override
     protected void tempLoad() {
         player.updateMovementFlags(false, false, true);
-        player.getAbilities().canBuild(false);
 
         if (XrManager.isInXR()) {
             for (int i = 0; i < hands.length; i++) {
                 hands[i] = new XrHand(UUID.randomUUID(), i);
                 this.addEntity(hands[i]);
+
+                Spawner<Dart> s = new Spawner<>(UUID.randomUUID(), 10, () -> {
+                    Dart d = new Dart(UUID.randomUUID());
+                    giveToFirstFreeHand(d);
+                    return d;
+                }, e -> e == null || e.isRemoved() || e.isFlying());
+                s.setRenderCooldown(false);
+
+                this.addEntity(s);
             }
         }
-
-        Spawner<Dart> dart = new Spawner<>(UUID.randomUUID(), 5, () -> new Dart(UUID.randomUUID()), e -> e.isRemoved() || e.isFlying());
-        dart.setPos(0.75f, 0.5f, 0f);
-        this.addEntity(dart);
-
-        Spawner<Dart> dart2 = new Spawner<>(UUID.randomUUID(), 5, () -> new Dart(UUID.randomUUID()), e -> e.isRemoved() || e.isFlying());
-        dart2.setPos(0.25f, 0.5f, 0f);
-        this.addEntity(dart2);
 
         initLevel();
     }
@@ -88,6 +103,10 @@ public class BaluzWorld extends WorldClient {
         Toast.clear(Toast.ToastType.WORLD);
 
         popAllBalloons();
+        for (Entity e : entities.values()) {
+            if (e instanceof Dart dart)
+                dart.setCanHit(true);
+        }
 
         terrainManager.clear();
 
@@ -99,6 +118,7 @@ public class BaluzWorld extends WorldClient {
         time = 0;
         remaningBalloons = 0;
         prepare = Client.TPS * 4 + 1;
+        state = GameState.PREPARE;
     }
 
     private void endLevel() {
@@ -118,6 +138,11 @@ public class BaluzWorld extends WorldClient {
 
         addEntity(exit);
         addEntity(retry);
+
+        for (Entity e : entities.values()) {
+            if (e instanceof Dart dart)
+                dart.setCanHit(false);
+        }
     }
 
     @Override
@@ -133,11 +158,21 @@ public class BaluzWorld extends WorldClient {
                 case Client.TPS     -> Toast.addToast("1...").type(Toast.ToastType.WORLD).length(Client.TPS);
                 case 0 -> {
                     Toast.addToast("Go!").type(Toast.ToastType.WORLD);
+                    state = GameState.PLAYING;
                     time = initialTime;
                     loadWave(currentWave);
                 }
             }
             return;
+        }
+
+        if (state == GameState.WIN && timeOfTheDay % (Client.TPS / 8) == 0) {
+            Firework f = new Firework(UUID.randomUUID(), (int) Maths.range(10, 40), Maths.spread(new Vector3f(0, 1f, 0), 15, 15), new FireworkStar(Colors.randomRainbow().rgba));
+            f.setSilent(timeOfTheDay % (Client.TPS * 2) != 0);
+            float angle = (float) (Math.random() * Math.PI * 2);
+            float radius = Maths.range(20, 32);
+            f.setPos((float) (Math.cos(angle) * radius), 5f, (float) (Math.sin(angle) * radius));
+            addEntity(f);
         }
 
         if (currentWave >= waves.size())
@@ -148,6 +183,8 @@ public class BaluzWorld extends WorldClient {
 
             if (time <= 0) {
                 Toast.addToast("Time's up! Final score: " + score).type(Toast.ToastType.WORLD).length(200);
+                playSound(ALARM, SoundCategory.GUI, player.getPos()).volume(0.3f);
+                state = GameState.LOSE;
                 time = 0;
                 currentWave = waves.size();
                 int score = this.score;
@@ -158,6 +195,12 @@ public class BaluzWorld extends WorldClient {
                 endLevel();
                 return;
             }
+
+            if ((time < Client.TPS * 2 && time % (Client.TPS / 5) == 0) ||
+                    (time < Client.TPS * 5 && time % (Client.TPS / 4) == 0) ||
+                    (time < Client.TPS * 10 && time % (Client.TPS / 2) == 0) ||
+                    time % Client.TPS == 0)
+                tickSound();
         }
 
         Wave curr = waves.get(currentWave);
@@ -178,9 +221,15 @@ public class BaluzWorld extends WorldClient {
                 Toast.addToast("All waves completed! Final score: " + score).type(Toast.ToastType.WORLD).length(200);
                 if (bonus > 0)
                     Toast.addToast("Time bonus: +" + bonus + "pts!").type(Toast.ToastType.WORLD).length(200);
+                state = GameState.WIN;
                 endLevel();
             }
         }
+    }
+
+    private void tickSound() {
+        playSound(TICK[lastTick], SoundCategory.ENTITY, player.getPos()).volume(0.3f);
+        lastTick = (lastTick + 1) % TICK.length;
     }
 
     @Override
@@ -286,6 +335,19 @@ public class BaluzWorld extends WorldClient {
         }
     }
 
+    private void giveToFirstFreeHand(XrGrabbable grabbable) {
+        for (XrHand hand : hands) {
+            if (hand != null && !hand.isGrabbing()) {
+                grabbable.setPos(hand.getPos());
+                hand.grab(grabbable);
+                return;
+            }
+        }
+
+        //no hand free, remove entity
+        grabbable.remove();
+    }
+
     @Override
     public void xrTriggerPress(int button, float value, int hand, float lastValue) {
         if (hand < hands.length && hands[hand] != null) {
@@ -300,9 +362,32 @@ public class BaluzWorld extends WorldClient {
         super.xrTriggerPress(button, value, hand, lastValue);
     }
 
+    @Override
+    public void mousePress(int button, int action, int mods) {
+        if (button == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS) {
+            Dart d = new Dart(UUID.randomUUID());
+            addEntity(d);
+            scheduledTicks.add(() -> {
+                d.release();
+                d.setPos(player.getEyePos());
+                d.setMotion(player.getLookDir().mul(0.8f));
+            });
+            return;
+        }
+
+        super.mousePress(button, action, mods);
+    }
+
     private void loadWave(int i) {
         for (Balloon ballon : waves.get(i).getBallons())
             addEntity(ballon);
         remaningBalloons = waves.get(i).getBallons().size();
+    }
+
+    private enum GameState {
+        PREPARE,
+        PLAYING,
+        WIN,
+        LOSE
     }
 }

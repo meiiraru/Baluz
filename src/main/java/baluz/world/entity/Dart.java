@@ -5,6 +5,7 @@ import cinnamon.model.GeometryHelper;
 import cinnamon.registry.EntityRegistry;
 import cinnamon.render.MatrixStack;
 import cinnamon.render.batch.VertexConsumer;
+import cinnamon.sound.SoundCategory;
 import cinnamon.utils.AABB;
 import cinnamon.utils.Maths;
 import cinnamon.utils.Resource;
@@ -23,12 +24,14 @@ import java.util.UUID;
 
 public class Dart extends XrGrabbable {
 
-    private static final Resource MODEL = new Resource("baluz", "models/dart/dart.obj");
+    private static final Resource
+            MODEL = new Resource("baluz", "models/dart/dart.obj"),
+            SWOOSH = new Resource("baluz", "sounds/swoosh.ogg");
     private static final int LIFETIME = 600; // in ticks
     private static final float SPEED = 0.15f;
 
     private int life = LIFETIME;
-    private boolean flying, grounded;
+    private boolean flying, grounded, canHit = true;
 
     public Dart(UUID uuid) {
         super(uuid, MODEL);
@@ -46,7 +49,7 @@ public class Dart extends XrGrabbable {
             }
 
             if (!grounded) {
-                StarParticle particle = new StarParticle(60, 0xFFFFFFFF);
+                StarParticle particle = new StarParticle(7, 0xFFFFFFFF);
                 particle.setPos(getPos());
                 particle.setScale(0.5f);
                 particle.setMotion(0, 0, 0);
@@ -76,7 +79,7 @@ public class Dart extends XrGrabbable {
     protected void collide(Entity entity, CollisionResult result, Vector3f toMove) {
         super.collide(entity, result, toMove);
 
-        if (!isRemoved() && entity instanceof Balloon balloon) {
+        if (!isRemoved() && canHit && entity instanceof Balloon balloon) {
             balloon.pop();
             //remove();
         }
@@ -106,6 +109,8 @@ public class Dart extends XrGrabbable {
     public void release() {
         flying = true;
         this.setMotion(getMoveDir());
+        if (!isSilent())
+            world.playSound(SWOOSH, SoundCategory.ENTITY, pos).pitch(Maths.range(0.8f, 1.2f)).volume(0.3f);
         super.release();
         updateAABB();
     }
@@ -145,5 +150,9 @@ public class Dart extends XrGrabbable {
         aabb.inflate(0.01f);
         Vector3f dir = getLookDir();
         aabb.translate(dir.mul(0.11f));
+    }
+
+    public void setCanHit(boolean canHit) {
+        this.canHit = canHit;
     }
 }

@@ -7,6 +7,7 @@ import cinnamon.registry.EntityRegistry;
 import cinnamon.render.MatrixStack;
 import cinnamon.render.model.ModelRenderer;
 import cinnamon.render.shader.Shader;
+import cinnamon.sound.SoundCategory;
 import cinnamon.utils.Colors;
 import cinnamon.utils.Maths;
 import cinnamon.utils.Resource;
@@ -19,7 +20,8 @@ public class Balloon extends PhysEntity {
 
     private static final Resource
             MODEL_TOP = new Resource("baluz", "models/balloon/balloon.obj"),
-            MODEL_STRING = new Resource("baluz", "models/balloon/string.obj");
+            MODEL_STRING = new Resource("baluz", "models/balloon/string.obj"),
+            POP_SOUND = new Resource("baluz", "sounds/pop.ogg");
 
     private final ModelRenderer stringModel;
     private final Material material;
@@ -65,6 +67,7 @@ public class Balloon extends PhysEntity {
 
         ((BaluzWorld) getWorld()).addScore(score);
         popParticles();
+        popSound();
         remove();
     }
 
@@ -76,6 +79,11 @@ public class Balloon extends PhysEntity {
             particle.setScale(1.5f);
             world.addParticle(particle);
         }
+    }
+
+    protected void popSound() {
+        if (!isSilent())
+            world.playSound(POP_SOUND, SoundCategory.ENTITY, pos).pitch(Maths.range(0.8f, 1.2f)).volume(0.3f);
     }
 
     @Override
