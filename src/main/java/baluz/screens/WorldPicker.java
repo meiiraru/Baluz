@@ -58,7 +58,7 @@ public class WorldPicker extends ParentedScreen {
 
     @Override
     public void init() {
-        Label title = new Label(width / 2, 4, Text.of("Select A Level"), Alignment.CENTER);
+        Label title = new Label(width / 2, 4, Text.of("Select a Level"), Alignment.CENTER);
         addWidget(title);
 
         WidgetList list = new WidgetList(width / 2, height / 2, width - 8, height - 8 - 4, 4);

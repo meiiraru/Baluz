@@ -1,0 +1,14 @@
+# Made in Blockbench 4.12.5
+newmtl m_7ce643db-7c3e-2e7a-3e02-ba72570ddf18
+map_Kd floor.png
+newmtl m_6e62f4b1-6af6-9d4b-5166-b91d8bcd5017
+map_Kd silo.png
+newmtl m_e0c81284-aaad-e989-4f37-2d5eae0247cf
+map_Kd barn.png
+newmtl m_8fcb20ad-f853-681e-22b5-ed70beefe650
+map_Kd tree.png
+newmtl m_c7b384f0-67c5-5861-eae4-10d155fc4d0d
+map_Kd fence.png
+newmtl m_5b13f7c4-3c1d-8c7a-3bd8-ef5be1cfb74f
+map_Kd score.png
+newmtl none

@@ -35,8 +35,7 @@ public class WorldLoader {
 
             //text
             JsonObject text = json.getAsJsonObject("text");
-            world.textTransform.setPos(parseVec3(text.getAsJsonArray("pos")));
-            world.textTransform.setPivot(world.textTransform.getPos());
+            world.textTransform.setPosPivot(parseVec3(text.getAsJsonArray("pos")));
             world.textTransform.setRot(parseVec3(text.getAsJsonArray("rot")));
             world.textTransform.setScale(text.get("scale").getAsFloat());
 

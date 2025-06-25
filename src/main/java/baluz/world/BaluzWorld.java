@@ -56,15 +56,15 @@ public class BaluzWorld extends WorldClient {
 
     private final Resource level;
 
-    private int score = 0;
+    protected int score = 0;
     private int currentWave = 0;
-    private int time = 0;
-    private int remaningBalloons = 0;
+    protected int time = 0;
+    protected int remaningBalloons = 0;
 
     public int initialTime = Integer.MAX_VALUE;
     public float timeBonusMul = 1f;
 
-    private int prepare = 0;
+    private int prepare = -1;
     private GameState state = GameState.PREPARE;
 
     private int lastTick = 0;
@@ -79,6 +79,7 @@ public class BaluzWorld extends WorldClient {
     @Override
     protected void tempLoad() {
         player.updateMovementFlags(false, false, true);
+        player.getAbilities().canBuild(false);
 
         if (XrManager.isInXR()) {
             for (int i = 0; i < hands.length; i++) {
@@ -99,26 +100,32 @@ public class BaluzWorld extends WorldClient {
         initLevel();
     }
 
-    private void initLevel() {
+    protected void initLevel() {
         Toast.clear(Toast.ToastType.WORLD);
 
         popAllBalloons();
-        for (Entity e : entities.values()) {
-            if (e instanceof Dart dart)
-                dart.setCanHit(true);
-        }
+        disarmDarts();
 
         terrainManager.clear();
 
         waves.clear();
-        waves.addAll(WorldLoader.loadWorld(level, this));
+        if (level != null)
+            waves.addAll(WorldLoader.loadWorld(level, this));
 
         score = 0;
         currentWave = 0;
         time = 0;
         remaningBalloons = 0;
-        prepare = Client.TPS * 4 + 1;
+        prepare = -1;
         state = GameState.PREPARE;
+
+        ActionBalloon start = new ActionBalloon(UUID.randomUUID(), Colors.randomRainbow().rgb, "Start", () -> {
+            remaningBalloons = 0;
+            score = 0;
+            prepare = Client.TPS * 4 + 1;
+        });
+        start.setPos(0.5f, 0f, -2f);
+        addEntity(start);
     }
 
     private void endLevel() {
@@ -138,16 +145,14 @@ public class BaluzWorld extends WorldClient {
 
         addEntity(exit);
         addEntity(retry);
-
-        for (Entity e : entities.values()) {
-            if (e instanceof Dart dart)
-                dart.setCanHit(false);
-        }
     }
 
     @Override
     public void tick() {
         super.tick();
+
+        if (prepare == -1)
+            return;
 
         if (prepare > 0) {
             prepare--;
@@ -167,10 +172,12 @@ public class BaluzWorld extends WorldClient {
         }
 
         if (state == GameState.WIN && timeOfTheDay % (Client.TPS / 8) == 0) {
-            Firework f = new Firework(UUID.randomUUID(), (int) Maths.range(10, 40), Maths.spread(new Vector3f(0, 1f, 0), 15, 15), new FireworkStar(Colors.randomRainbow().rgba));
+            Firework f = new Firework(UUID.randomUUID(), (int) Maths.range(10, 30), Maths.spread(new Vector3f(0, 1f, 0), 15, 15).mul(2f),
+                    new FireworkStar(new Integer[]{Colors.randomRainbow().rgba}, new Integer[]{Colors.WHITE.rgba}, true, true)
+            );
             f.setSilent(timeOfTheDay % (Client.TPS * 2) != 0);
             float angle = (float) (Math.random() * Math.PI * 2);
-            float radius = Maths.range(20, 32);
+            float radius = Maths.range(20, 64);
             f.setPos((float) (Math.cos(angle) * radius), 5f, (float) (Math.sin(angle) * radius));
             addEntity(f);
         }
@@ -348,10 +355,19 @@ public class BaluzWorld extends WorldClient {
         grabbable.remove();
     }
 
+    private void disarmDarts() {
+        for (Entity e : entities.values()) {
+            if (e instanceof Dart dart)
+                dart.setCanHit(false);
+        }
+    }
+
     @Override
     public void xrTriggerPress(int button, float value, int hand, float lastValue) {
         if (hand < hands.length && hands[hand] != null) {
             if (value > 0.5f && lastValue <= 0.5f) {
+                if (hands[hand].getTargetEntity() instanceof Dart d)
+                    d.setCanHit(true);
                 hands[hand].grab();
             } else if (value <= 0.5f && lastValue > 0.5f) {
                 hands[hand].release();
@@ -379,6 +395,10 @@ public class BaluzWorld extends WorldClient {
     }
 
     private void loadWave(int i) {
+        if (i < 0 || i >= waves.size())
+            return;
+
+        disarmDarts();
         for (Balloon ballon : waves.get(i).getBallons())
             addEntity(ballon);
         remaningBalloons = waves.get(i).getBallons().size();
