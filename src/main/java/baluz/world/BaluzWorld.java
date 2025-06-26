@@ -88,7 +88,7 @@ public class BaluzWorld extends WorldClient {
 
                 Spawner<Dart> s = new Spawner<>(UUID.randomUUID(), 10, () -> {
                     Dart d = new Dart(UUID.randomUUID());
-                    giveToFirstFreeHand(d);
+                    scheduledTicks.add(() -> scheduledTicks.add(() -> giveToFirstFreeHand(d)));
                     return d;
                 }, e -> e == null || e.isRemoved() || e.isFlying());
                 s.setRenderCooldown(false);
@@ -175,7 +175,7 @@ public class BaluzWorld extends WorldClient {
             Firework f = new Firework(UUID.randomUUID(), (int) Maths.range(10, 30), Maths.spread(new Vector3f(0, 1f, 0), 15, 15).mul(2f),
                     new FireworkStar(new Integer[]{Colors.randomRainbow().rgba}, new Integer[]{Colors.WHITE.rgba}, true, true)
             );
-            f.setSilent(timeOfTheDay % (Client.TPS * 2) != 0);
+            f.setSilent(timeOfTheDay % (Client.TPS / 2) != 0);
             float angle = (float) (Math.random() * Math.PI * 2);
             float radius = Maths.range(20, 64);
             f.setPos((float) (Math.cos(angle) * radius), 5f, (float) (Math.sin(angle) * radius));

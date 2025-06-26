@@ -2,6 +2,7 @@ package baluz.world;
 
 import baluz.world.entity.ActionBalloon;
 import cinnamon.Client;
+import cinnamon.gui.Toast;
 import cinnamon.registry.TerrainRegistry;
 import cinnamon.utils.Colors;
 import cinnamon.utils.Resource;
@@ -21,6 +22,8 @@ public class TutorialWorld extends BaluzWorld {
 
     @Override
     protected void initLevel() {
+        Toast.clear(Toast.ToastType.WORLD);
+
         //load dummy floor and score
         Terrain t = new Terrain(FLOOR, TerrainRegistry.BARRIER);
         setTerrain(t, 0, 0, 0);

@@ -48,27 +48,27 @@
     {
       "awards": {"time": 0, "score": 30},
       "balloons": [
-        {"color": "0000FF", "pos": [-3.5, 3, -7]},
-        {"color": "0000FF", "pos": [-2.5, 2, -7]},
-        {"color": "0000FF", "pos": [-1.5, 1, -7]},
-        {"color": "0000FF", "pos": [-0.5, 0.75, -7]},
-        {"color": "0000FF", "pos": [0.5, 0.5, -7]},
-        {"color": "0000FF", "pos": [1.5, 0.75, -7]},
-        {"color": "0000FF", "pos": [2.5, 1, -7]},
-        {"color": "0000FF", "pos": [3.5, 2, -7]},
-        {"color": "0000FF", "pos": [4.5, 3, -7]},
+        {"color": "0000FF", "pos": [-3.5, 3, -6]},
+        {"color": "0000FF", "pos": [-2.5, 2, -6]},
+        {"color": "0000FF", "pos": [-1.5, 1, -6]},
+        {"color": "0000FF", "pos": [-0.5, 0.75, -6]},
+        {"color": "0000FF", "pos": [0.5, 0.5, -6]},
+        {"color": "0000FF", "pos": [1.5, 0.75, -6]},
+        {"color": "0000FF", "pos": [2.5, 1, -6]},
+        {"color": "0000FF", "pos": [3.5, 2, -6]},
+        {"color": "0000FF", "pos": [4.5, 3, -6]},
 
-        {"color": "FFFFFF", "pos": [-0.5, 4, -7]},
-        {"color": "FFFFFF", "pos": [-0.5, 5, -7]},
-        {"color": "FFFFFF", "pos": [1.5, 4, -7]},
-        {"color": "FFFFFF", "pos": [1.5, 5, -7]}
+        {"color": "FFFFFF", "pos": [-0.5, 4, -6]},
+        {"color": "FFFFFF", "pos": [-0.5, 5, -6]},
+        {"color": "FFFFFF", "pos": [1.5, 4, -6]},
+        {"color": "FFFFFF", "pos": [1.5, 5, -6]}
       ]
     },
 
     {
       "awards": {"time": 0, "score": 0},
       "balloons": [ 
-        {"pos": [0.5, 1, -10], "material": "GOLD", "score": 100}
+        {"pos": [0.5, 1, -8], "material": "GOLD", "score": 100}
       ]
     }
   ]

@@ -28,7 +28,7 @@ public class Dart extends XrGrabbable {
             MODEL = new Resource("baluz", "models/dart/dart.obj"),
             SWOOSH = new Resource("baluz", "sounds/swoosh.ogg");
     private static final int LIFETIME = 600; // in ticks
-    private static final float SPEED = 0.15f;
+    private static final float SPEED = 0.25f;
 
     private int life = LIFETIME;
     private boolean flying, grounded, canHit = true;
@@ -67,7 +67,7 @@ public class Dart extends XrGrabbable {
     @Override
     protected void applyForces() {
         if (flying && !grounded)
-            this.motion.y -= world.gravity * 0.5f;
+            this.motion.y -= world.gravity * 0.35f; //aerodynamics, baby!
     }
 
     @Override
